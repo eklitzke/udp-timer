@@ -4,37 +4,12 @@ import System.IO.Unsafe
 import System.Time
 import GHC.Conc
 
-data Descriptor = Descriptor Int ClockTime
- 
-showDesc :: Descriptor -> String
-showDesc (Descriptor c t) = "Descriptor " ++ (show c) ++ " " ++ (show t)
-
--- what port the service listens on
-servicePort = 9900
-
--- how much data we can recv
-bufferSize = 2000
-
--- ten seconds
-td :: TimeDiff
-td = TimeDiff 0 0 0 0 0 10 0
-
--- global TVars
-descCounter :: TVar Int
-descCounter = unsafePerformIO $ newTVarIO 1 
-
-activeCounterList :: TVar [Descriptor]
-activeCounterList = unsafePerformIO $ newTVarIO []
-
--------
+import UdpTimer.Util
+import UdpTimer.Globals
 
 main :: IO ()
-main = do
-  forkIO reapForever
-  withSocketsDo $ do
-         sock <- socket AF_INET Datagram 0
-         bindSocket sock (SockAddrInet servicePort iNADDR_ANY)
-         (forever . processSocket) sock
+main = do forkIO reapForever
+          doSocketLoop processSocket
 
 -- Atomically increments descCounter, and adds a Descriptor to activeCounterList
 newUdpCounter :: IO Int
@@ -52,7 +27,7 @@ reapCounters :: ClockTime -> STM ()
 reapCounters timeNow = do
   cl <- readTVar activeCounterList
   writeTVar activeCounterList (filter isYoung cl)
-  where isYoung (Descriptor _ t) = diffClockTimes timeNow t < td
+  where isYoung (Descriptor _ t) = diffClockTimes timeNow t < reapInterval
 
 reapForever :: IO ()
 reapForever = forever $ do
