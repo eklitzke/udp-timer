@@ -2,11 +2,9 @@ module UdpTimer.Util where
 import System.Time
 import Network.Socket
 import Control.Monad
+import Control.Concurrent.Chan
 
-data Descriptor = Descriptor Int ClockTime
-
-instance Show Descriptor where
-    show (Descriptor t ct) = concat ["Descriptor ", show t, " ", show ct]
+import UdpTimer.Globals
 
 -- ten seconds
 reapInterval :: TimeDiff
@@ -21,8 +19,9 @@ bufferSize :: Int
 bufferSize = 2000
 
 -- create a socket and run processSocket forever 
-doSocketLoop :: (Socket -> IO a) -> IO a
-doSocketLoop processSocket = withSocketsDo $ do
-                               sock <- socket AF_INET Datagram 0
-                               bindSocket sock (SockAddrInet servicePort iNADDR_ANY)
-                               forever $ processSocket sock
+doSocketLoop :: IO ()
+doSocketLoop = withSocketsDo $ do
+                 sock <- socket AF_INET Datagram 0
+                 bindSocket sock (SockAddrInet servicePort iNADDR_ANY)
+                 forever $ do (mesg, len, client) <- recvFrom sock bufferSize
+                              writeChan incomingChan (mesg, client)

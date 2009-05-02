@@ -6,10 +6,11 @@ import GHC.Conc
 
 import UdpTimer.Util
 import UdpTimer.Globals
+import UdpTimer.Types
 
 main :: IO ()
 main = do forkIO reapForever
-          doSocketLoop processSocket
+          doSocketLoop
 
 -- Atomically increments descCounter, and adds a Descriptor to activeCounterList
 newUdpCounter :: IO Int
@@ -37,13 +38,3 @@ reapForever = forever $ do
   aclLen <- atomically $ readTVar activeCounterList
   putStrLn $ ", " ++ (show $ length aclLen) ++ " active counters"
   threadDelay (5 * 1000000)
-
--- process the socket
-processSocket :: Socket -> IO ()
-processSocket sock = do
-  (mesg, len, client) <- recvFrom sock bufferSize
-  newCounterVal <- newUdpCounter
-  cl <- atomically (readTVar activeCounterList)
-  let newMesg = show newCounterVal
-  sendCount <- sendTo sock newMesg client
-  return ()
