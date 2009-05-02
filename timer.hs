@@ -7,10 +7,14 @@ import GHC.Conc
 import UdpTimer.Util
 import UdpTimer.Globals
 import UdpTimer.Types
+import UdpTimer.CpuCount
 
 main :: IO ()
-main = do forkIO reapForever
-          doSocketLoop
+main = do nrCpu <- getCpuCount
+          putStrLn $ "nrCpu " ++ (show nrCpu)
+          forkIO reapForever
+          (input, output) <- threadPoolIO nrCpu handleReq
+          forkIO $ doSocketLoop input
 
 -- Atomically increments descCounter, and adds a Descriptor to activeCounterList
 newUdpCounter :: IO Int

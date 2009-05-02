@@ -12,5 +12,5 @@ descCounter = unsafePerformIO $ newTVarIO 1
 activeCounterList :: TVar [Descriptor]
 activeCounterList = unsafePerformIO $ newTVarIO []
 
-incomingChan :: Chan (String, SockAddr)
-incomingChan = unsafePerformIO $ newChan
+--incomingChan :: Chan (String, SockAddr)
+--incomingChan = unsafePerformIO $ newChan

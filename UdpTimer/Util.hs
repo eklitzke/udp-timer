@@ -19,9 +19,9 @@ bufferSize :: Int
 bufferSize = 2000
 
 -- create a socket and run processSocket forever 
-doSocketLoop :: IO ()
-doSocketLoop = withSocketsDo $ do
-                 sock <- socket AF_INET Datagram 0
-                 bindSocket sock (SockAddrInet servicePort iNADDR_ANY)
-                 forever $ do (mesg, len, client) <- recvFrom sock bufferSize
-                              writeChan incomingChan (mesg, client)
+doSocketLoop :: Chan (String, SockAddr) -> IO ()
+doSocketLoop incoming = withSocketsDo $ do
+                          sock <- socket AF_INET Datagram 0
+                          bindSocket sock (SockAddrInet servicePort iNADDR_ANY)
+                          forever $ do (mesg, len, client) <- recvFrom sock bufferSize
+                                       writeChan incoming (mesg, client)
