@@ -46,7 +46,7 @@ reapForever = forever $ do
   aclLen <- atomically $ readTVar activeCounterList
   putStrLn $ ", " ++ (show $ length aclLen) ++ " active counters"
   threadDelay (5 * 1000000)
-              
+           
 handleReq :: (Socket, String, SockAddr) -> IO ()
 handleReq (sock, mesg, client) = do
   case mesg of
@@ -54,4 +54,3 @@ handleReq (sock, mesg, client) = do
                 sendTo sock (show val) client
     _     -> sendTo sock "ERROR" client
   return ()
-
