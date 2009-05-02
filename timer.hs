@@ -3,13 +3,22 @@ import Control.Monad
 import System.IO.Unsafe
 import System.Time
 import GHC.Conc
+import Control.ThreadPool
+import Text.Printf
 
 import UdpTimer.Util
 import UdpTimer.Globals
+import UdpTimer.Types
+import UdpTimer.CpuCount
 
 main :: IO ()
-main = do forkIO reapForever
-          doSocketLoop processSocket
+main = do nrCpu <- getCpuCount
+          let workerCount = nrCpu * 2
+          printf "Spawning %d worker threads...\n" workerCount
+          (input, output) <- threadPoolIO workerCount handleReq
+          forkIO reapForever
+          --forkIO $ doSocketLoop input
+          doSocketLoop input
 
 -- Atomically increments descCounter, and adds a Descriptor to activeCounterList
 newUdpCounter :: IO Int
@@ -37,13 +46,12 @@ reapForever = forever $ do
   aclLen <- atomically $ readTVar activeCounterList
   putStrLn $ ", " ++ (show $ length aclLen) ++ " active counters"
   threadDelay (5 * 1000000)
-
--- process the socket
-processSocket :: Socket -> IO ()
-processSocket sock = do
-  (mesg, len, client) <- recvFrom sock bufferSize
-  newCounterVal <- newUdpCounter
-  cl <- atomically (readTVar activeCounterList)
-  let newMesg = show newCounterVal
-  sendCount <- sendTo sock newMesg client
+              
+handleReq :: (Socket, String, SockAddr) -> IO ()
+handleReq (sock, mesg, client) = do
+  case mesg of
+    "NEW" -> do val <- newUdpCounter
+                sendTo sock (show val) client
+    _     -> sendTo sock "ERROR" client
   return ()
+

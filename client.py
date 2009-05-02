@@ -13,6 +13,6 @@ if __name__ == '__main__':
 	parser.add_option('-p', '--port', dest='port', default=9900, type='int', help='The port to send to')
 	opts, args = parser.parse_args()
 	udp_sock = prepare_sock(opts.port)
-	udp_sock.send('test')
+	udp_sock.send('NEW')
 	buf = udp_sock.recv(100)
 	print buf
